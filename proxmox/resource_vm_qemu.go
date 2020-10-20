@@ -1054,6 +1054,23 @@ func resourceVmQemuRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("ipconfig1", config.Ipconfig1)
 	d.Set("ipconfig2", config.Ipconfig2)
 
+	// Some dirty hacks to populate undefined keys with default values.
+	if _, ok := d.GetOk("clone_wait"); !ok {
+		d.Set("clone_wait", thisResource.Schema["clone_wait"].Default)
+	}
+	if _, ok := d.GetOk("force_create"); !ok {
+		d.Set("force_create", thisResource.Schema["force_create"].Default)
+	}
+	if _, ok := d.GetOk("full_clone"); !ok {
+		d.Set("full_clone", thisResource.Schema["full_clone"].Default)
+	}
+	if _, ok := d.GetOk("define_connection_info"); !ok {
+		d.Set("define_connection_info", thisResource.Schema["define_connection_info"].Default)
+	}
+	if _, ok := d.GetOk("preprovision"); !ok {
+		d.Set("preprovision", thisResource.Schema["preprovision"].Default)
+	}
+
 	// Disks.
 	// add an explicit check that the keys in the config.QemuDisks map are a strict subset of
 	// the keys in our resource schema. if they aren't things fail in a very weird and hidden way
@@ -1100,6 +1117,10 @@ func resourceVmQemuRead(d *schema.ResourceData, meta interface{}) error {
 	// the keys in our resource schema. if they aren't things fail in a very weird and hidden way
 	logger.Debug().Int("vmid", vmID).Msgf("Network block received '%v'", config.QemuNetworks)
 	for _, networkEntry := range config.QemuNetworks {
+		// If network tag was not set, assign default value.
+		if networkEntry["tag"] == "" || networkEntry["tag"] == nil {
+			networkEntry["tag"] = thisResource.Schema["network"].Elem.(*schema.Resource).Schema["tag"].Default
+		}
 		for key, _ := range networkEntry {
 			if _, ok := thisResource.Schema["network"].Elem.(*schema.Resource).Schema[key]; !ok {
 				if key == "id" { // we purposely ignore id here as that is implied by the order in the TypeList/QemuDevice(list)

@@ -1055,20 +1055,11 @@ func resourceVmQemuRead(d *schema.ResourceData, meta interface{}) error {
 	d.Set("ipconfig2", config.Ipconfig2)
 
 	// Some dirty hacks to populate undefined keys with default values.
-	if _, ok := d.GetOk("clone_wait"); !ok {
-		d.Set("clone_wait", thisResource.Schema["clone_wait"].Default)
-	}
-	if _, ok := d.GetOk("force_create"); !ok {
-		d.Set("force_create", thisResource.Schema["force_create"].Default)
-	}
-	if _, ok := d.GetOk("full_clone"); !ok {
-		d.Set("full_clone", thisResource.Schema["full_clone"].Default)
-	}
-	if _, ok := d.GetOk("define_connection_info"); !ok {
-		d.Set("define_connection_info", thisResource.Schema["define_connection_info"].Default)
-	}
-	if _, ok := d.GetOk("preprovision"); !ok {
-		d.Set("preprovision", thisResource.Schema["preprovision"].Default)
+	checkedKeys := []string{"clone_wait", "force_create", "full_clone", "define_connection_info", "preprovision"}
+	for _, key := range checkedKeys {
+		if _, ok := d.GetOk(key); !ok {
+			d.Set(key, thisResource.Schema[key].Default)
+		}
 	}
 
 	// Disks.
